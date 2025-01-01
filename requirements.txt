@@ -1,3 +1,4 @@
+flask
 webuiapi
-python-dateutil
-Pillow 
+tqdm
+pandas
