@@ -185,4 +185,32 @@ h1 {
     max-height: 95vh;
     max-width: 95vw;
     object-fit: contain;
+}
+
+/* 入口页面样式 */
+.list-group-item {
+    transition: all 0.3s ease;
+    margin-bottom: 8px;
+    border-radius: 8px !important;
+}
+
+.list-group-item:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+}
+
+.badge {
+    font-size: 0.9em;
+    padding: 8px 12px;
+}
+
+/* 响应式调整 */
+@media (max-width: 768px) {
+    .container {
+        padding: 0 15px;
+    }
+    
+    .list-group-item {
+        margin-bottom: 6px;
+    }
 } 

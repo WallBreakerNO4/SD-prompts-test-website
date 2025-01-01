@@ -32,28 +32,34 @@ def sync_images():
     
     return True
 
-def get_latest_batch():
-    """获取最新的批次文件夹"""
-    # 首先同步图片
+def get_all_batches():
+    """获取所有批次及其信息"""
     sync_images()
-    
     batch_dir = Path('static') / 'generate_images' / 'batch'
     if not batch_dir.exists():
-        return None
+        return [], {}
     
     folders = [f for f in batch_dir.iterdir() if f.is_dir()]
-    if not folders:
-        return None
+    batches = [f.name for f in folders]
+    batch_info = {}
     
-    return max(f.name for f in folders)
+    for batch in batches:
+        db_path = batch_dir / batch / 'image_generation.db'
+        if db_path.exists():
+            conn = sqlite3.connect(str(db_path))
+            cursor = conn.cursor()
+            cursor.execute('SELECT COUNT(*) FROM image_records')
+            image_count = cursor.fetchone()[0]
+            conn.close()
+            batch_info[batch] = {
+                'image_count': image_count
+            }
+    
+    return sorted(batches, reverse=True), batch_info
 
-def get_matrix_data():
-    """获取矩阵式组织的图片数据"""
-    latest_batch = get_latest_batch()
-    if not latest_batch:
-        return None, None, None
-    
-    batch_path = Path('static') / 'generate_images' / 'batch' / latest_batch
+def get_matrix_data(batch_name):
+    """获取指定批次的矩阵式组织的图片数据"""
+    batch_path = Path('static') / 'generate_images' / 'batch' / batch_name
     db_path = batch_path / 'image_generation.db'
     
     if not db_path.exists():
@@ -82,7 +88,7 @@ def get_matrix_data():
             result = cursor.fetchone()
             if result:
                 # 使用正斜杠构建URL路径
-                url_path = '/'.join(['generate_images', 'batch', latest_batch, result[0]])
+                url_path = '/'.join(['generate_images', 'batch', batch_name, result[0]])
                 matrix[artist][prompt] = url_path
             else:
                 matrix[artist][prompt] = None
@@ -91,12 +97,16 @@ def get_matrix_data():
     return matrix, artists, prompts
 
 @app.route('/')
-def index():
-    matrix, artists, prompts = get_matrix_data()
+def home():
+    batches, batch_info = get_all_batches()
+    return render_template('home.html', batches=batches, batch_info=batch_info)
+
+@app.route('/batch/<batch_name>')
+def show_batch(batch_name):
+    matrix, artists, prompts = get_matrix_data(batch_name)
     if not matrix:
-        return "No images found", 404
+        return "批次不存在或没有图片", 404
     
-    batch_name = get_latest_batch()
     return render_template('index.html', matrix=matrix, artists=artists, prompts=prompts, batch_name=batch_name)
 
 if __name__ == '__main__':
