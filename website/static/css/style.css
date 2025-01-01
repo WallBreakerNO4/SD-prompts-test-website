@@ -136,3 +136,53 @@ h1 {
         min-width: 150px;
     }
 } 
+
+/* 全屏模态框样式 */
+.fullscreen-modal .modal-dialog {
+    max-width: 100%;
+    margin: 0;
+    padding: 0;
+    height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.fullscreen-modal .modal-content {
+    background: transparent;
+    border: none;
+    box-shadow: none;
+}
+
+.fullscreen-modal .modal-body {
+    padding: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.fullscreen-modal .modal-header {
+    border: none;
+    padding: 0;
+    position: absolute;
+    top: 20px;
+    right: 20px;
+    z-index: 1000;
+}
+
+.fullscreen-modal .btn-close {
+    background-color: rgba(255, 255, 255, 0.7);
+    border-radius: 50%;
+    padding: 10px;
+    margin: 0;
+}
+
+.fullscreen-modal .modal-backdrop.show {
+    opacity: 0.85;
+}
+
+#modalImage {
+    max-height: 95vh;
+    max-width: 95vw;
+    object-fit: contain;
+} 

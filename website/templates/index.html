@@ -28,12 +28,13 @@
                         <td class="image-cell">
                             {% if matrix[artist][prompt] %}
                             <div class="image-container">
-                                <a href="{{ url_for('static', filename=matrix[artist][prompt]) }}" target="_blank">
-                                    <img src="{{ url_for('static', filename=matrix[artist][prompt]) }}" 
-                                         alt="{{ artist }} - {{ prompt }}"
-                                         class="matrix-image"
-                                         loading="lazy">
-                                </a>
+                                <img src="{{ url_for('static', filename=matrix[artist][prompt]) }}" 
+                                     alt="{{ artist }} - {{ prompt }}"
+                                     class="matrix-image"
+                                     loading="lazy"
+                                     data-bs-toggle="modal"
+                                     data-bs-target="#imageModal"
+                                     onclick="showImage(this.src, '{{ artist }}', '{{ prompt }}')">
                             </div>
                             {% else %}
                             <div class="no-image">无图片</div>
@@ -46,6 +47,27 @@
             </table>
         </div>
     </div>
+
+    <!-- 图片模态框 -->
+    <div class="modal fade fullscreen-modal" id="imageModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <img id="modalImage" src="" alt="">
+                </div>
+            </div>
+        </div>
+    </div>
+
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        function showImage(src, artist, prompt) {
+            document.getElementById('modalImage').src = src;
+            document.getElementById('modalImage').alt = `${artist} - ${prompt}`;
+        }
+    </script>
 </body>
 </html> 
