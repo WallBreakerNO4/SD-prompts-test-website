@@ -82,7 +82,7 @@ def generate_and_save_with_record(prompt, artist_file, artist_prompt, prompt_fil
     timestamp = datetime.now().strftime("%H%M%S")
     
     # 生成图片
-    images = generate_images_batch([prompt])
+    images = generate_images_batch([prompt], verbose=False)
     
     # 生成文件名
     image_filename = f"image_{timestamp}_0.{IMAGE_SAVE_FORMAT}"
