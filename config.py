@@ -8,7 +8,8 @@ DEFAULT_CFG_SCALE = 4.5
 DEFAULT_WIDTH = 832
 DEFAULT_HEIGHT = 1216
 DEFAULT_SAMPLER = "Euler"
-DEFAULT_NEGATIVE_PROMPT = "text,watermark,bad anatomy,bad proportions,extra limbs,extra digit,extra legs,extra legs and arms,disfigured,missing arms,too many fingers,fused fingers,missing fingers,unclear eyes,watermark,username,logo,artist logo,patreon logo,weibo logo,arknights logo,"
+DEFAULT_NEGATIVE_PROMPT = r"text,watermark,bad anatomy,bad proportions,extra limbs,extra digit,extra legs,extra legs and arms,disfigured,missing arms,too many fingers,fused fingers,missing fingers,unclear eyes,watermark,username,logo,artist logo,patreon logo,weibo logo,arknights logo,"
+DEFAULT_QUALITY_PROMPT = r"very awa,masterpiece,best quality,year 2024,newest,highres,absurdres,"
 
 # 图片保存配置
 IMAGE_SAVE_FORMAT = "webp"
