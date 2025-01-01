@@ -1,0 +1,103 @@
+.img-thumbnail {
+    transition: transform 0.2s;
+}
+
+.img-thumbnail:hover {
+    transform: scale(1.1);
+}
+
+.table td {
+    vertical-align: middle;
+}
+
+.container {
+    max-width: 1200px;
+    margin: 0 auto;
+}
+
+h1 {
+    color: #333;
+    text-align: center;
+    margin-bottom: 30px;
+}
+
+.matrix-table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+.prompt-header, .artist-header {
+    background-color: #f8f9fa;
+    font-weight: bold;
+    padding: 10px;
+    text-align: center;
+    min-width: 150px;
+    position: sticky;
+    top: 0;
+    z-index: 1;
+}
+
+.image-cell {
+    padding: 10px;
+    text-align: center;
+    position: relative;
+}
+
+.image-container {
+    position: relative;
+    display: inline-block;
+}
+
+.matrix-image {
+    max-width: 200px;
+    height: auto;
+    transition: transform 0.2s;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+}
+
+.matrix-image:hover {
+    transform: scale(1.5);
+    z-index: 100;
+}
+
+.image-info {
+    display: none;
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    background: rgba(0, 0, 0, 0.7);
+    color: white;
+    padding: 5px;
+    font-size: 12px;
+    text-align: center;
+}
+
+.image-container:hover .image-info {
+    display: block;
+}
+
+.no-image {
+    padding: 20px;
+    background-color: #f8f9fa;
+    border: 1px dashed #dee2e6;
+    color: #6c757d;
+    border-radius: 4px;
+}
+
+.container-fluid {
+    padding: 20px;
+}
+
+/* 适配移动端 */
+@media (max-width: 768px) {
+    .matrix-image {
+        max-width: 150px;
+    }
+    
+    .prompt-header, .artist-header {
+        min-width: 100px;
+        font-size: 14px;
+    }
+} 
