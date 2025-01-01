@@ -2,6 +2,7 @@ import os
 import pandas as pd
 import sqlite3
 from datetime import datetime
+from tqdm import tqdm
 from config import *
 from generate_image import generate_images_batch
 
@@ -9,7 +10,7 @@ def get_batch_dir():
     """获取当前批次的目录路径"""
     current_date = datetime.now().strftime("%Y%m%d")
     current_time = datetime.now().strftime("%H%M%S")
-    batch_dir = os.path.join("generate_images", "batch", f"{current_date}-{current_time}")
+    batch_dir = os.path.join("website", "static", "generate_images", "batch", f"{current_date}-{current_time}")
     if not os.path.exists(batch_dir):
         os.makedirs(batch_dir)
     return batch_dir
@@ -77,14 +78,18 @@ def save_generation_record(conn, image_path, artist_file, artist_prompt, prompt_
 
 def generate_and_save_with_record(prompt, artist_file, artist_prompt, prompt_file, prompt_text, conn, batch_dir):
     """生成图片并保存记录"""
-    # 生成图片并获取保存路径
+    # 生成时间戳
     timestamp = datetime.now().strftime("%H%M%S")
     
-    # 生成图片，并传入batch_dir作为保存目录
-    generate_images_batch([prompt], save_dir=batch_dir)
+    # 生成图片
+    images = generate_images_batch([prompt])
     
-    # 生成文件名（与generate_image.py中的格式保持一致）
+    # 生成文件名
     image_filename = f"image_{timestamp}_0.{IMAGE_SAVE_FORMAT}"
+    image_path = os.path.join(batch_dir, image_filename)
+    
+    # 保存图片
+    images[0].save(image_path, format=IMAGE_SAVE_FORMAT, quality=IMAGE_QUALITY)
     
     # 保存记录到数据库
     save_generation_record(
@@ -98,13 +103,6 @@ def generate_and_save_with_record(prompt, artist_file, artist_prompt, prompt_fil
     )
 
 def main():
-    # 创建批次目录
-    batch_dir = get_batch_dir()
-    print(f"本次生成的文件将保存在: {batch_dir}")
-    
-    # 初始化数据库
-    conn = init_database(batch_dir)
-    
     # 定义文件夹路径
     artists_folder = "prompts/aritsts_folder"
     prompts_folder = "prompts/prompts_folder"
@@ -128,26 +126,46 @@ def main():
     print(f"\n从 {selected_artist_file} 中读取到 {len(artists)} 个艺术家风格")
     print(f"从 {selected_prompt_file} 中读取到 {len(prompts)} 个提示词")
     
-    # 生成图片并记录信息
+    # 计算总组合数
     total_combinations = len(artists) * len(prompts)
     print(f"\n将生成 {total_combinations} 张图片...")
     
-    for artist in artists:
-        for prompt in prompts:
-            combined_prompt = f"{DEFAULT_QUALITY_PROMPT}{artist},{prompt}"
-            generate_and_save_with_record(
-                combined_prompt,
-                selected_artist_file,
-                artist,
-                selected_prompt_file,
-                prompt,
-                conn,
-                batch_dir
-            )
+    # 创建批次目录
+    batch_dir = get_batch_dir()
+    print(f"本次生成的文件将保存在: {batch_dir}")
     
-    # 关闭数据库连接
-    conn.close()
-    print(f"\n所有图片生成完成，信息已保存到数据库: {os.path.join(batch_dir, 'image_generation.db')}")
+    # 初始化数据库
+    conn = init_database(batch_dir)
+    
+    # 使用tqdm创建进度条
+    progress_bar = tqdm(total=total_combinations, desc="生成进度")
+    
+    try:
+        # 生成图片并记录信息
+        for artist in artists:
+            for prompt in prompts:
+                combined_prompt = f"{DEFAULT_QUALITY_PROMPT}{artist},{prompt}"
+                generate_and_save_with_record(
+                    combined_prompt,
+                    selected_artist_file,
+                    artist,
+                    selected_prompt_file,
+                    prompt,
+                    conn,
+                    batch_dir
+                )
+                # 更新进度条
+                progress_bar.update(1)
+                # 显示当前正在处理的组合
+                progress_bar.set_postfix_str(f"当前: {artist[:20]}... + {prompt[:20]}...")
+    except Exception as e:
+        print(f"\n生成过程中出现错误: {str(e)}")
+    finally:
+        # 关闭进度条
+        progress_bar.close()
+        # 关闭数据库连接
+        conn.close()
+        print(f"\n所有图片生成完成，信息已保存到数据库: {os.path.join(batch_dir, 'image_generation.db')}")
 
 if __name__ == "__main__":
     main() 
