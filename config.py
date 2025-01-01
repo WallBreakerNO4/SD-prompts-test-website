@@ -1,7 +1,7 @@
 # SD WebUI API配置
 # API_HOST = '100.71.15.9'
 # API_PORT = 7860
-API_HOST = '127.0.0.1'
+API_HOST = 'localhost'
 API_PORT = 6006
 
 # 图片生成配置
