@@ -66,13 +66,11 @@ h1 {
 .matrix-image {
     max-width: 200px;
     height: auto;
-    transition: transform 0.2s;
     border: 1px solid #ddd;
     border-radius: 4px;
 }
 
 .matrix-image:hover {
-    transform: scale(1.5);
     z-index: 100;
 }
 
