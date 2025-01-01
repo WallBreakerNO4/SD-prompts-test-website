@@ -24,6 +24,7 @@ h1 {
 .matrix-table {
     width: 100%;
     border-collapse: collapse;
+    table-layout: fixed;
 }
 
 .prompt-header, .artist-header {
@@ -31,16 +32,30 @@ h1 {
     font-weight: bold;
     padding: 10px;
     text-align: center;
-    min-width: 150px;
     position: sticky;
     top: 0;
     z-index: 1;
+    overflow-wrap: break-word;
+    word-wrap: break-word;
+    white-space: normal;
+    word-break: break-word;
+    hyphens: auto;
+    min-height: 50px;
+}
+
+.artist-header {
+    width: 120px;
+}
+
+.prompt-header {
+    width: 200px;
 }
 
 .image-cell {
     padding: 10px;
     text-align: center;
     position: relative;
+    width: 200px;
 }
 
 .image-container {
@@ -90,14 +105,53 @@ h1 {
     padding: 20px;
 }
 
+/* 修改表格第一列（艺术家列）的宽度 */
+.matrix-table td:first-child,
+.matrix-table th:first-child {
+    width: 120px;  /* 与 artist-header 保持一致 */
+    max-width: 120px;
+    min-width: 120px;
+}
+
+/* 修改表格其他列的宽度 */
+.matrix-table td:not(:first-child),
+.matrix-table th:not(:first-child) {
+    width: 200px;  /* 与 prompt-header 保持一致 */
+    max-width: 200px;
+    min-width: 200px;
+}
+
 /* 适配移动端 */
 @media (max-width: 768px) {
     .matrix-image {
         max-width: 150px;
     }
     
-    .prompt-header, .artist-header {
-        min-width: 100px;
+    .prompt-header {
+        width: 150px;
         font-size: 14px;
+    }
+    
+    .artist-header {
+        width: 100px;
+        font-size: 14px;
+    }
+    
+    .image-cell {
+        width: 150px;
+    }
+
+    .matrix-table td:first-child,
+    .matrix-table th:first-child {
+        width: 100px;
+        max-width: 100px;
+        min-width: 100px;
+    }
+
+    .matrix-table td:not(:first-child),
+    .matrix-table th:not(:first-child) {
+        width: 150px;
+        max-width: 150px;
+        min-width: 150px;
     }
 } 
