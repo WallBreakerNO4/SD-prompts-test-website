@@ -2,7 +2,7 @@ import os
 import pandas as pd
 import sqlite3
 from datetime import datetime
-from tqdm import tqdm
+from tqdm import tqdm, tqdm_notebook
 from config import *
 from generate_image import generate_images_batch
 
@@ -45,18 +45,18 @@ def list_csv_files(directory):
 
 def select_file(files, folder_name):
     """让用户从文件列表中选择一个文件"""
-    print(f"\n{folder_name}中的CSV文件：")
+    tqdm.write(f"\n{folder_name}中的CSV文件：")
     for i, file in enumerate(files, 1):
-        print(f"{i}. {file}")
+        tqdm.write(f"{i}. {file}")
     
     while True:
         try:
             choice = int(input(f"\n请选择一个{folder_name}中的文件 (输入数字): "))
             if 1 <= choice <= len(files):
                 return files[choice - 1]
-            print("无效的选择，请重试")
+            tqdm.write("无效的选择，请重试")
         except ValueError:
-            print("请输入有效的数字")
+            tqdm.write("请输入有效的数字")
 
 def read_csv_content(file_path):
     """读取CSV文件内容"""
@@ -112,7 +112,7 @@ def main():
     prompts_files = list_csv_files(prompts_folder)
     
     if not artists_files or not prompts_files:
-        print("错误：文件夹中没有找到CSV文件")
+        tqdm.write("错误：文件夹中没有找到CSV文件")
         return
     
     selected_artist_file = select_file(artists_files, "artists文件夹")
@@ -123,16 +123,16 @@ def main():
     prompts = read_csv_content(os.path.join(prompts_folder, selected_prompt_file))
     
     # 打印读取到的内容数量
-    print(f"\n从 {selected_artist_file} 中读取到 {len(artists)} 个艺术家风格")
-    print(f"从 {selected_prompt_file} 中读取到 {len(prompts)} 个提示词")
+    tqdm.write(f"\n从 {selected_artist_file} 中读取到 {len(artists)} 个艺术家风格")
+    tqdm.write(f"从 {selected_prompt_file} 中读取到 {len(prompts)} 个提示词")
     
     # 计算总组合数
     total_combinations = len(artists) * len(prompts)
-    print(f"\n将生成 {total_combinations} 张图片...")
+    tqdm.write(f"\n将生成 {total_combinations} 张图片...")
     
     # 创建批次目录
     batch_dir = get_batch_dir()
-    print(f"本次生成的文件将保存在: {batch_dir}")
+    tqdm.write(f"本次生成的文件将保存在: {batch_dir}")
     
     # 初始化数据库
     conn = init_database(batch_dir)
@@ -159,13 +159,13 @@ def main():
                 # 显示当前正在处理的组合
                 progress_bar.set_postfix_str(f"当前: {artist[:20]}... + {prompt[:20]}...")
     except Exception as e:
-        print(f"\n生成过程中出现错误: {str(e)}")
+        tqdm.write(f"\n生成过程中出现错误: {str(e)}")
     finally:
         # 关闭进度条
         progress_bar.close()
         # 关闭数据库连接
         conn.close()
-        print(f"\n所有图片生成完成，信息已保存到数据库: {os.path.join(batch_dir, 'image_generation.db')}")
+        tqdm.write(f"\n所有图片生成完成，信息已保存到数据库: {os.path.join(batch_dir, 'image_generation.db')}")
 
 if __name__ == "__main__":
     main() 
