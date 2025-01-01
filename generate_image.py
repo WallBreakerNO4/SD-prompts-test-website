@@ -10,12 +10,13 @@ def ensure_directory(path):
     if not os.path.exists(path):
         os.makedirs(path)
 
-def generate_and_save_image(prompt, negative_prompt=DEFAULT_NEGATIVE_PROMPT):
+def generate_and_save_image(prompt, save_dir=None, negative_prompt=DEFAULT_NEGATIVE_PROMPT):
     """
     生成图片并保存
     
     Args:
         prompt (str): 正向提示词
+        save_dir (str, optional): 保存目录，如果不指定则使用默认目录
         negative_prompt (str, optional): 负向提示词，默认使用配置文件中的设置
     """
     # 初始化API
@@ -33,9 +34,11 @@ def generate_and_save_image(prompt, negative_prompt=DEFAULT_NEGATIVE_PROMPT):
         sampler_name=DEFAULT_SAMPLER
     )
     
-    # 创建保存目录
-    current_date = datetime.now().strftime(DATE_FORMAT)
-    save_dir = os.path.join(SAVE_DIR, current_date)
+    # 确定保存目录
+    if save_dir is None:
+        current_date = datetime.now().strftime(DATE_FORMAT)
+        save_dir = os.path.join(SAVE_DIR, current_date)
+    
     ensure_directory(save_dir)
     
     # 保存图片
@@ -52,17 +55,21 @@ def generate_and_save_image(prompt, negative_prompt=DEFAULT_NEGATIVE_PROMPT):
         # 保存图片
         image.save(save_path, format=IMAGE_SAVE_FORMAT, quality=IMAGE_QUALITY)
         print(f"图片已保存到: {save_path}")
+        
+        # 返回保存的文件名，用于数据库记录
+        return filename
 
-def generate_images_batch(prompts, negative_prompt=DEFAULT_NEGATIVE_PROMPT):
+def generate_images_batch(prompts, save_dir=None, negative_prompt=DEFAULT_NEGATIVE_PROMPT):
     """
     批量生成图片
     
     Args:
         prompts (list): 提示词列表
+        save_dir (str, optional): 保存目录，如果不指定则使用默认目录
         negative_prompt (str, optional): 负向提示词，默认使用配置文件中的设置
     """
     for prompt in prompts:
-        generate_and_save_image(prompt, negative_prompt)
+        generate_and_save_image(prompt, save_dir, negative_prompt)
 
 if __name__ == "__main__":
     # 测试示例
