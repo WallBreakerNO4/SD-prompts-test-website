@@ -1,10 +1,11 @@
-from flask import Flask, render_template, send_from_directory
+from flask import Flask, render_template, send_from_directory, abort
 import sqlite3
 from datetime import datetime, timedelta
 import shutil
 from pathlib import Path
 import json
 import os
+from web_config import get_batch_config, get_enabled_batches
 
 app = Flask(__name__)
 
@@ -72,29 +73,26 @@ def sync_images():
     return True
 
 def get_all_batches():
-    """获取所有批次及其信息"""
-    sync_images()
-    batch_dir = Path('static') / 'generate_images' / 'batch'
+    """获取所有批次信息"""
+    batch_dir = Path('static/generate_images/batch')
     if not batch_dir.exists():
-        return [], {}
+        return []
     
-    folders = [f for f in batch_dir.iterdir() if f.is_dir()]
-    batches = [f.name for f in folders]
-    batch_info = {}
+    batches = []
+    for batch_path in batch_dir.iterdir():
+        if batch_path.is_dir():
+            batch_name = batch_path.name
+            full_path = f"batch/{batch_name}"
+            config = get_batch_config(full_path)
+            if config.get("enabled", False):
+                batches.append({
+                    "name": batch_name,
+                    "display_name": config["display_name"],
+                    "url_path": config["url_path"],
+                    "path": str(batch_path)
+                })
     
-    for batch in batches:
-        db_path = batch_dir / batch / 'image_generation.db'
-        if db_path.exists():
-            conn = sqlite3.connect(str(db_path))
-            cursor = conn.cursor()
-            cursor.execute('SELECT COUNT(*) FROM image_records')
-            image_count = cursor.fetchone()[0]
-            conn.close()
-            batch_info[batch] = {
-                'image_count': image_count
-            }
-    
-    return sorted(batches, reverse=True), batch_info
+    return sorted(batches, key=lambda x: x["name"], reverse=True)
 
 def get_matrix_data(batch_name):
     """获取指定批次的矩阵式组织的图片数据"""
@@ -145,16 +143,24 @@ def get_matrix_data(batch_name):
 
 @app.route('/')
 def home():
-    batches, batch_info = get_all_batches()
-    return render_template('home.html', batches=batches, batch_info=batch_info)
+    batches = get_all_batches()
+    return render_template('index.html', batches=batches)
 
-@app.route('/batch/<batch_name>')
-def show_batch(batch_name):
-    matrix, artists, prompts = get_matrix_data(batch_name)
-    if not matrix:
-        return "批次不存在或没有图片", 404
+@app.route('/batch/<url_path>')
+def show_batch(url_path):
+    # 查找对应的原始批次路径
+    for batch_path, config in get_enabled_batches().items():
+        if config["url_path"] == url_path:
+            batch_name = batch_path.split("/")[-1]
+            matrix, artists, prompts = get_matrix_data(batch_name)
+            return render_template('batch.html', 
+                                matrix=matrix, 
+                                artists=artists, 
+                                prompts=prompts, 
+                                batch_name=batch_name,
+                                display_name=config["display_name"])
     
-    return render_template('index.html', matrix=matrix, artists=artists, prompts=prompts, batch_name=batch_name)
+    abort(404)  # 如果找不到对应的批次，返回404错误
 
 @app.after_request
 def add_header(response):
