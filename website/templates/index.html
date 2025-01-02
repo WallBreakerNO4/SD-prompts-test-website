@@ -63,11 +63,6 @@
     </div>
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
-    <script>
-        function showImage(src, artist, prompt) {
-            document.getElementById('modalImage').src = src;
-            document.getElementById('modalImage').alt = `${artist} - ${prompt}`;
-        }
-    </script>
+    <script src="{{ url_for('static', filename='js/main.js') }}"></script>
 </body>
 </html> 
