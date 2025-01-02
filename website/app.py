@@ -69,10 +69,10 @@ def get_matrix_data(batch_name):
     cursor = conn.cursor()
     
     # 获取所有不同的艺术家和提示词
-    cursor.execute('SELECT DISTINCT artist_prompt FROM image_records ORDER BY artist_prompt')
+    cursor.execute('SELECT DISTINCT artist_prompt FROM image_records ORDER BY artist_prompt DESC')
     artists = [row[0] for row in cursor.fetchall()]
     
-    cursor.execute('SELECT DISTINCT prompt_text FROM image_records ORDER BY prompt_text')
+    cursor.execute('SELECT DISTINCT prompt_text FROM image_records ORDER BY prompt_text DESC')
     prompts = [row[0] for row in cursor.fetchall()]
     
     # 创建图片矩阵
