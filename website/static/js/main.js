@@ -96,4 +96,20 @@ document.addEventListener('DOMContentLoaded', () => {
     images.forEach(img => {
         imageObserver.observe(img);
     });
+
+    // 添加模态框点击关闭功能
+    const modal = document.querySelector('.fullscreen-modal');
+    if (modal) {
+        modal.addEventListener('click', (event) => {
+            // 如果点击的是模态框本身或模态框内容（不是图片），则关闭模态框
+            if (event.target.classList.contains('modal-dialog') || 
+                event.target.classList.contains('modal-content') ||
+                event.target.classList.contains('modal-body')) {
+                const bootstrapModal = bootstrap.Modal.getInstance(modal);
+                if (bootstrapModal) {
+                    bootstrapModal.hide();
+                }
+            }
+        });
+    }
 });

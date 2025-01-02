@@ -1,3 +1,8 @@
+body {
+    background-color: #f8f9fa;
+    font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+}
+
 .img-thumbnail {
     transition: transform 0.2s;
 }
@@ -16,21 +21,25 @@
 }
 
 h1 {
-    color: #333;
+    color: #2c3e50;
     text-align: center;
-    margin-bottom: 30px;
+    margin-bottom: 40px;
+    font-weight: 600;
+    font-size: 2.5rem;
+    text-shadow: 1px 1px 2px rgba(0,0,0,0.1);
 }
 
 .matrix-table {
-    width: 100%;
-    border-collapse: collapse;
-    table-layout: fixed;
+    background: white;
+    border-radius: 12px;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+    overflow: hidden;
 }
 
 .prompt-header, .artist-header {
-    background-color: #f8f9fa;
-    font-weight: bold;
-    padding: 10px;
+    background-color: #f1f5f9;
+    font-weight: 600;
+    padding: 15px;
     text-align: center;
     position: sticky;
     top: 0;
@@ -40,7 +49,9 @@ h1 {
     white-space: normal;
     word-break: break-word;
     hyphens: auto;
-    min-height: 50px;
+    min-height: 60px;
+    color: #1a365d;
+    border-bottom: 2px solid #e2e8f0;
 }
 
 .artist-header {
@@ -63,32 +74,47 @@ h1 {
     display: inline-block;
     width: 180px;
     height: 263px;
-    background-color: #f0f0f0;
+    background-color: #f8fafc;
     overflow: hidden;
+    border-radius: 8px;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.image-container:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 5px 15px rgba(0,0,0,0.2);
 }
 
 .matrix-image {
     width: 100%;
     height: 100%;
     object-fit: cover;
-    transition: opacity 0.3s ease-in-out;
-    cursor: pointer;
+    transition: all 0.4s ease-in-out;
+    cursor: zoom-in;
 }
 
 .matrix-image:hover {
-    z-index: 100;
+    transform: scale(1.05);
 }
 
 .no-image {
     padding: 20px;
-    background-color: #f8f9fa;
-    border: 1px dashed #dee2e6;
-    color: #6c757d;
-    border-radius: 4px;
+    background-color: #f1f5f9;
+    border: 2px dashed #cbd5e1;
+    color: #64748b;
+    border-radius: 8px;
+    font-size: 0.9rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    height: 100%;
 }
 
 .container-fluid {
-    padding: 20px;
+    padding: 30px;
+    max-width: 1800px;
+    margin: 0 auto;
 }
 
 /* 修改表格第一列（艺术家列）的宽度 */
@@ -147,11 +173,13 @@ h1 {
     max-width: none;
     margin: 0;
     padding: 20px;
+    cursor: pointer;
 }
 
 .fullscreen-modal .modal-content {
-    background-color: rgba(0, 0, 0, 0.9);
+    background-color: rgba(0, 0, 0, 0.95);
     border: none;
+    cursor: pointer;
 }
 
 .fullscreen-modal .modal-body {
@@ -163,43 +191,66 @@ h1 {
 }
 
 .fullscreen-modal .modal-body img {
-    max-width: 832px;
-    max-height: 1216px;
-    width: auto;
-    height: auto;
-    object-fit: contain;
+    max-width: 95vw;
+    max-height: 95vh;
+    border-radius: 8px;
+    box-shadow: 0 0 30px rgba(0,0,0,0.3);
+    cursor: default;
+    pointer-events: none;
 }
 
 .fullscreen-modal .btn-close {
     position: absolute;
-    right: 20px;
-    top: 20px;
-    z-index: 1050;
+    right: 30px;
+    top: 30px;
     background-color: white;
-    opacity: 0.7;
+    opacity: 0.8;
+    padding: 10px;
+    border-radius: 50%;
+    transition: all 0.3s ease;
+    z-index: 1060;
+    cursor: pointer;
 }
 
 .fullscreen-modal .btn-close:hover {
     opacity: 1;
+    transform: rotate(90deg);
 }
 
 /* 响应式布局 */
 @media (max-width: 992px) {
+    .container-fluid {
+        padding: 20px;
+    }
+    
+    h1 {
+        font-size: 2rem;
+    }
+    
     .image-container {
-        width: 140px;
-        height: 204px;
+        width: 160px;
+        height: 234px;
     }
 }
 
 @media (max-width: 768px) {
-    .image-container {
-        width: 120px;
-        height: 175px;
+    .container-fluid {
+        padding: 15px;
     }
     
-    .image-cell {
+    h1 {
+        font-size: 1.8rem;
+        margin-bottom: 30px;
+    }
+    
+    .image-container {
         width: 140px;
-        padding: 5px;
+        height: 205px;
+    }
+    
+    .prompt-header, .artist-header {
+        padding: 10px;
+        font-size: 0.9rem;
     }
 }
 
@@ -245,8 +296,8 @@ h1 {
     width: 40px;
     height: 40px;
     margin: -20px 0 0 -20px;
-    border: 4px solid #f3f3f3;
-    border-top: 4px solid #3498db;
+    border: 3px solid rgba(54, 89, 227, 0.1);
+    border-top: 3px solid #3659e3;
     border-radius: 50%;
     animation: spin 1s linear infinite;
 }
