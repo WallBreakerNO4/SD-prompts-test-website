@@ -89,7 +89,9 @@ def get_all_batches():
                     "name": batch_name,
                     "display_name": config["display_name"],
                     "url_path": config["url_path"],
-                    "path": str(batch_path)
+                    "path": str(batch_path),
+                    "civitai_url": config.get("civitai_url", ""),
+                    "huggingface_url": config.get("huggingface_url", "")
                 })
     
     return sorted(batches, key=lambda x: x["name"], reverse=True)
