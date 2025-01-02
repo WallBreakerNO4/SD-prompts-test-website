@@ -3,12 +3,51 @@ import sqlite3
 from datetime import datetime
 import shutil
 from pathlib import Path
+import json
+import os
 
 app = Flask(__name__)
 
 def ensure_directory_exists(path):
     """确保目录存在，如果不存在则创建"""
     Path(path).mkdir(parents=True, exist_ok=True)
+
+def get_cache_path(batch_name):
+    """获取缓存文件路径"""
+    cache_dir = Path('static') / 'cache'
+    ensure_directory_exists(cache_dir)
+    return cache_dir / f"{batch_name}_matrix.json"
+
+def is_cache_valid(batch_name):
+    """检查缓存是否有效"""
+    cache_path = get_cache_path(batch_name)
+    if not cache_path.exists():
+        return False
+    
+    # 检查缓存文件的修改时间是否晚于数据库的修改时间
+    db_path = Path('static') / 'generate_images' / 'batch' / batch_name / 'image_generation.db'
+    if not db_path.exists():
+        return False
+    
+    return os.path.getmtime(cache_path) > os.path.getmtime(db_path)
+
+def save_matrix_cache(batch_name, matrix, artists, prompts):
+    """保存矩阵数据到缓存"""
+    cache_data = {
+        'matrix': matrix,
+        'artists': artists,
+        'prompts': prompts
+    }
+    cache_path = get_cache_path(batch_name)
+    with open(cache_path, 'w', encoding='utf-8') as f:
+        json.dump(cache_data, f, ensure_ascii=False)
+
+def load_matrix_cache(batch_name):
+    """从缓存加载矩阵数据"""
+    cache_path = get_cache_path(batch_name)
+    with open(cache_path, 'r', encoding='utf-8') as f:
+        cache_data = json.load(f)
+    return cache_data['matrix'], cache_data['artists'], cache_data['prompts']
 
 def sync_images():
     """同步图片文件到static目录"""
@@ -59,6 +98,10 @@ def get_all_batches():
 
 def get_matrix_data(batch_name):
     """获取指定批次的矩阵式组织的图片数据"""
+    # 检查是否有有效的缓存
+    if is_cache_valid(batch_name):
+        return load_matrix_cache(batch_name)
+    
     batch_path = Path('static') / 'generate_images' / 'batch' / batch_name
     db_path = batch_path / 'image_generation.db'
     
@@ -94,6 +137,10 @@ def get_matrix_data(batch_name):
                 matrix[artist][prompt] = None
     
     conn.close()
+    
+    # 保存到缓存
+    save_matrix_cache(batch_name, matrix, artists, prompts)
+    
     return matrix, artists, prompts
 
 @app.route('/')
