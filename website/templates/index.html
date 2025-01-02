@@ -28,13 +28,13 @@
                         <td class="image-cell">
                             {% if matrix[artist][prompt] %}
                             <div class="image-container">
-                                <img src="{{ url_for('static', filename=matrix[artist][prompt]) }}" 
+                                <img src="data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7"
+                                     data-src="{{ url_for('static', filename=matrix[artist][prompt]) }}"
                                      alt="{{ artist }} - {{ prompt }}"
                                      class="matrix-image"
-                                     loading="lazy"
                                      data-bs-toggle="modal"
                                      data-bs-target="#imageModal"
-                                     onclick="showImage(this.src, '{{ artist }}', '{{ prompt }}')">
+                                     onclick="showImage(this.dataset.src || this.src, '{{ artist }}', '{{ prompt }}')">
                             </div>
                             {% else %}
                             <div class="no-image">无图片</div>
