@@ -1,0 +1,13 @@
+[Unit]
+Description=SD Prompts Website
+After=network.target
+
+[Service]
+User=wall
+WorkingDirectory=/home/wall/SD-prompts-test-website/website
+Environment="PATH=/home/wall/SD-prompts-test-website/website/venv/bin"
+ExecStart=/home/wall/SD-prompts-test-website/website/venv/bin/gunicorn -c gunicorn_config.py app:app
+Restart=always
+
+[Install]
+WantedBy=multi-user.target 
