@@ -61,6 +61,7 @@ h1 {
 
 .artist-header {
     width: 120px;
+    position: relative;
 }
 
 .prompt-header {
@@ -400,3 +401,20 @@ h1 {
 .highlight-animation {
     animation: highlightRow 1.5s ease-out forwards;
 } 
+
+.row-number-indicator {
+    position: absolute;
+    top: 2px;
+    left: 2px;
+    font-size: 0.8em;
+    color: #666;
+    background-color: rgba(241, 245, 249, 0.9);
+    padding: 2px 4px;
+    border-radius: 4px;
+    font-weight: normal;
+}
+
+/* 删除旧的行号样式 */
+/* .row-number-header, .row-number {
+    display: none;
+} */ 

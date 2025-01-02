@@ -28,7 +28,6 @@
             <table class="table table-bordered matrix-table">
                 <thead>
                     <tr>
-                        <th class="row-number-header">#</th>
                         <th class="prompt-header">Artist \ Prompt</th>
                         {% for prompt in prompts %}
                         <th class="prompt-header">{{ prompt }}</th>
@@ -38,8 +37,10 @@
                 <tbody>
                     {% for artist in artists %}
                     <tr id="row-{{ loop.index }}">
-                        <td class="row-number">{{ loop.index }}</td>
-                        <th class="artist-header">{{ artist }}</th>
+                        <th class="artist-header">
+                            <span class="row-number-indicator">{{ loop.index }}</span>
+                            {{ artist }}
+                        </th>
                         {% for prompt in prompts %}
                         <td class="image-cell">
                             {% if matrix[artist][prompt] %}
