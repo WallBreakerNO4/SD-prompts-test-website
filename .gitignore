@@ -172,3 +172,4 @@ cython_debug/
 
 generate_images/
 cache/
+caddy-docker
