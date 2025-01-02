@@ -20,7 +20,21 @@
     <div class="container-fluid mt-4">
         <div class="d-flex justify-content-between align-items-center mb-4">
             <a href="{{ url_for('home') }}" class="btn btn-outline-primary">返回列表</a>
-            <h1 class="text-center mb-0">{{ display_name }}</h1>
+            <div class="text-center">
+                <h1 class="mb-2">{{ display_name }}</h1>
+                <div class="model-links">
+                    {% if config.get('civitai_url') %}
+                    <a href="{{ config.civitai_url }}" target="_blank" class="btn btn-sm btn-outline-info me-2">
+                        <img src="{{ url_for('static', filename='img/civitai-logo.png') }}" alt="Civitai" style="height: 20px;"> Civitai
+                    </a>
+                    {% endif %}
+                    {% if config.get('huggingface_url') %}
+                    <a href="{{ config.huggingface_url }}" target="_blank" class="btn btn-sm btn-outline-warning">
+                        <img src="{{ url_for('static', filename='img/hf-logo.svg') }}" alt="HuggingFace" style="height: 20px;"> HuggingFace
+                    </a>
+                    {% endif %}
+                </div>
+            </div>
             <div style="width: 100px;"></div>  <!-- 为了保持标题居中的占位div -->
         </div>
         

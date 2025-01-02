@@ -158,7 +158,8 @@ def show_batch(url_path):
                                 artists=artists, 
                                 prompts=prompts, 
                                 batch_name=batch_name,
-                                display_name=config["display_name"])
+                                display_name=config["display_name"],
+                                config=config)
     
     abort(404)  # 如果找不到对应的批次，返回404错误
 
