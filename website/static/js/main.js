@@ -87,15 +87,42 @@ function preloadNearbyImages(currentImg) {
     });
 }
 
-// 页面加载完成后初始化
-document.addEventListener('DOMContentLoaded', () => {
-    // 获取所有图片
+// 观察可见区域附近的图片
+function observeVisibleImages() {
+    const viewportHeight = window.innerHeight;
     const images = document.querySelectorAll('.matrix-image[data-src]');
     
-    // 观察所有图片
     images.forEach(img => {
-        imageObserver.observe(img);
+        const imgRect = img.getBoundingClientRect();
+        // 观察视口上下300px范围内的图片
+        if (imgRect.top > -300 && imgRect.top < viewportHeight + 300) {
+            imageObserver.observe(img);
+        } else {
+            imageObserver.unobserve(img);
+        }
     });
+}
+
+// 防抖函数
+function debounce(func, wait) {
+    let timeout;
+    return function executedFunction(...args) {
+        const later = () => {
+            clearTimeout(timeout);
+            func(...args);
+        };
+        clearTimeout(timeout);
+        timeout = setTimeout(later, wait);
+    };
+}
+
+// 页面加载完成后初始化
+document.addEventListener('DOMContentLoaded', () => {
+    // 初始观察可见区域的图片
+    observeVisibleImages();
+
+    // 添加滚动监听器（带防抖）
+    window.addEventListener('scroll', debounce(observeVisibleImages, 100));
 
     // 添加模态框点击关闭功能
     const modal = document.querySelector('.fullscreen-modal');
@@ -113,3 +140,39 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 });
+
+// 跳转到指定行
+function jumpToRow() {
+    const rowNumber = document.getElementById('rowNumber').value;
+    const targetRow = document.getElementById(`row-${rowNumber}`);
+    
+    if (targetRow) {
+        // 暂停所有图片加载
+        imageObserver.disconnect();
+        
+        // 移除之前的高亮效果
+        const previousHighlight = document.querySelector('.highlight-animation');
+        if (previousHighlight) {
+            previousHighlight.classList.remove('highlight-animation');
+        }
+        
+        // 计算目标位置
+        const headerHeight = document.querySelector('h1').offsetHeight + 40;
+        const targetTop = targetRow.offsetTop - headerHeight;
+        
+        // 强制禁用平滑滚动并直接跳转
+        document.documentElement.style.scrollBehavior = 'auto';
+        window.scrollTo(0, targetTop);
+        
+        // 添加高亮效果
+        targetRow.classList.add('highlight-animation');
+        
+        // 1.5秒后移除高亮类
+        setTimeout(() => {
+            targetRow.classList.remove('highlight-animation');
+        }, 1500);
+        
+        // 延迟一下再开始观察图片，等待页面稳定
+        setTimeout(observeVisibleImages, 100);
+    }
+}
