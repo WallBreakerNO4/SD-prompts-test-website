@@ -50,13 +50,13 @@
 
     <!-- 图片模态框 -->
     <div class="modal fade fullscreen-modal" id="imageModal" tabindex="-1" aria-hidden="true">
-        <div class="modal-dialog">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        <div class="modal-dialog modal-fullscreen">
+            <div class="modal-content bg-dark bg-opacity-75">
+                <div class="modal-header border-0">
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
                 </div>
-                <div class="modal-body">
-                    <img id="modalImage" src="" alt="">
+                <div class="modal-body d-flex align-items-center justify-content-center">
+                    <img id="modalImage" src="" alt="" class="img-fluid" style="max-height: 90vh; object-fit: contain;">
                 </div>
             </div>
         </div>
