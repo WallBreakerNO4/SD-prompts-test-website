@@ -1,6 +1,6 @@
-from flask import Flask, render_template
+from flask import Flask, render_template, send_from_directory
 import sqlite3
-from datetime import datetime
+from datetime import datetime, timedelta
 import shutil
 from pathlib import Path
 import json
@@ -155,6 +155,22 @@ def show_batch(batch_name):
         return "批次不存在或没有图片", 404
     
     return render_template('index.html', matrix=matrix, artists=artists, prompts=prompts, batch_name=batch_name)
+
+@app.after_request
+def add_header(response):
+    """为所有响应添加缓存控制头"""
+    if 'Cache-Control' not in response.headers:
+        response.headers['Cache-Control'] = 'no-store'
+    return response
+
+@app.route('/static/generate_images/batch/<path:filename>')
+def serve_image(filename):
+    """专门处理图片文件的路由，添加缓存控制"""
+    response = send_from_directory('static/generate_images/batch', filename)
+    # 设置缓存时间为30天
+    response.headers['Cache-Control'] = 'public, max-age=2592000'
+    response.headers['Expires'] = (datetime.utcnow() + timedelta(days=30)).strftime('%a, %d %b %Y %H:%M:%S GMT')
+    return response
 
 if __name__ == '__main__':
     app.run(debug=True) 
