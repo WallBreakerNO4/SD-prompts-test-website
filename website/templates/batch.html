@@ -62,7 +62,7 @@
                             {% if matrix[artist][prompt] %}
                             <div class="image-container">
                                 <img src="data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7"
-                                     data-src="{{ url_for('static', filename=matrix[artist][prompt]) }}"
+                                     data-src="{{ matrix[artist][prompt] }}"
                                      alt="{{ artist }} - {{ prompt }}"
                                      class="matrix-image"
                                      data-bs-toggle="modal"
