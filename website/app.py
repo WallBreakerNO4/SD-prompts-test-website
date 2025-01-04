@@ -6,8 +6,35 @@ from pathlib import Path
 import json
 import os
 from web_config import get_batch_config, get_enabled_batches
+from functools import lru_cache
+from contextlib import contextmanager
+from typing import Optional, Tuple, Dict, List
+
+# 缓存版本号，当缓存结构发生变化时递增
+CACHE_VERSION = 1
+# 缓存过期时间（秒）
+CACHE_EXPIRE_TIME = 24 * 60 * 60  # 24小时
 
 app = Flask(__name__)
+
+# 创建数据库连接池
+class DatabasePool:
+    def __init__(self):
+        self._connections = {}
+        
+    @contextmanager
+    def get_connection(self, db_path: str):
+        if db_path not in self._connections:
+            self._connections[db_path] = sqlite3.connect(db_path)
+        try:
+            yield self._connections[db_path]
+        except Exception as e:
+            if db_path in self._connections:
+                self._connections[db_path].close()
+                del self._connections[db_path]
+            raise e
+
+db_pool = DatabasePool()
 
 def ensure_directory_exists(path):
     """确保目录存在，如果不存在则创建"""
@@ -17,81 +44,62 @@ def get_cache_path(batch_name):
     """获取缓存文件路径"""
     cache_dir = Path('static') / 'cache'
     ensure_directory_exists(cache_dir)
-    return cache_dir / f"{batch_name}_matrix.json"
+    return cache_dir / f"{batch_name}_matrix_v{CACHE_VERSION}.json"
+
+@lru_cache(maxsize=32)
+def get_file_mtime(file_path: str) -> float:
+    """获取文件修改时间，使用LRU缓存优化性能"""
+    return os.path.getmtime(file_path)
 
 def is_cache_valid(batch_name):
     """检查缓存是否有效"""
     cache_path = get_cache_path(batch_name)
     if not cache_path.exists():
-        print("缓存文件不存在")
         return False
     
-    # 检查缓存文件的修改时间是否晚于数据库的修改时间
-    db_path = Path('static') / 'generate_images' / 'batch' / batch_name / 'image_generation.db'
-    r2_mapping_path = Path('static') / 'generate_images' / 'batch' / batch_name / 'r2_url_mapping.json'
-    r2_mapping_test_path = Path('static') / 'generate_images' / 'batch' / batch_name / 'r2_url_mapping_test.json'
+    # 获取所有相关文件路径
+    batch_path = Path('static') / 'generate_images' / 'batch' / batch_name
+    db_path = batch_path / 'image_generation.db'
+    r2_mapping_path = batch_path / 'r2_url_mapping.json'
     
-    if not db_path.exists():
-        print("数据库文件不存在")
+    # 基本文件检查
+    if not db_path.exists() or not r2_mapping_path.exists():
         return False
     
-    # 检查缓存的内容是否都是http URL
     try:
+        # 检查缓存是否过期
+        cache_time = get_file_mtime(str(cache_path))
+        current_time = datetime.now().timestamp()
+        if current_time - cache_time > CACHE_EXPIRE_TIME:
+            return False
+        
+        # 检查源文件是否有更新
+        db_time = get_file_mtime(str(db_path))
+        r2_time = get_file_mtime(str(r2_mapping_path))
+        if cache_time <= max(db_time, r2_time):
+            return False
+        
+        # 验证缓存内容和版本
         with open(cache_path, 'r', encoding='utf-8') as f:
             cache_data = json.load(f)
-            matrix = cache_data.get('matrix', {})
-            
-            # 检查是否有任何有效的URL
-            has_valid_url = False
-            for artist in matrix:
-                for prompt in matrix[artist]:
-                    url = matrix[artist][prompt]
-                    if url and url.startswith('http'):
-                        has_valid_url = True
-                        break
-                if has_valid_url:
-                    break
-            
-            if not has_valid_url:
-                print("缓存中没有有效的URL")
+            if cache_data.get('version') != CACHE_VERSION:
                 return False
             
-    except Exception as e:
-        print(f"读取缓存文件出错: {e}")
-        return False
-    
-    # 检查缓存是否需要更新
-    cache_time = os.path.getmtime(cache_path)
-    db_time = os.path.getmtime(db_path)
-    
-    # 如果存在任一映射文件，检查其修改时间
-    if r2_mapping_path.exists():
-        r2_time = os.path.getmtime(r2_mapping_path)
-        if cache_time < r2_time:
-            print("正式版映射文件已更新")
-            return False
+            matrix = cache_data.get('matrix', {})
+            return any(url and url.startswith('http') 
+                      for artist in matrix.values() 
+                      for url in artist.values() 
+                      if url)
             
-    if r2_mapping_test_path.exists():
-        r2_test_time = os.path.getmtime(r2_mapping_test_path)
-        if cache_time < r2_test_time:
-            print("测试版映射文件已更新")
-            return False
-    
-    # 如果没有任何映射文件存在，强制重新生成
-    if not r2_mapping_path.exists() and not r2_mapping_test_path.exists():
-        print("没有找到任何映射文件")
+    except Exception as e:
+        print(f"缓存验证出错: {e}")
         return False
-    
-    if cache_time <= db_time:
-        print("缓存早于数据库")
-        return False
-        
-    print("缓存验证通过")
-    return True
 
 def save_matrix_cache(batch_name, matrix, artists, prompts):
     """保存矩阵数据到缓存"""
     cache_data = {
+        'version': CACHE_VERSION,
+        'timestamp': datetime.now().timestamp(),
         'matrix': matrix,
         'artists': artists,
         'prompts': prompts
@@ -155,94 +163,63 @@ def get_all_batches():
 
 def get_matrix_data(batch_name):
     """获取指定批次的矩阵式组织的图片数据"""
-    print(f"\n开始处理批次: {batch_name}")
-    
-    # 检查是否有有效的缓存
     if is_cache_valid(batch_name):
-        print("使用缓存数据")
         return load_matrix_cache(batch_name)
-    else:
-        print("缓存无效，重新生成数据")
     
     batch_path = Path('static') / 'generate_images' / 'batch' / batch_name
     db_path = batch_path / 'image_generation.db'
     r2_mapping_path = batch_path / 'r2_url_mapping.json'
-    r2_mapping_test_path = batch_path / 'r2_url_mapping_test.json'
     
-    print(f"数据库路径: {db_path}")
-    print(f"R2映射文件路径: {r2_mapping_path}")
-    print(f"R2测试映射文件路径: {r2_mapping_test_path}")
-    
-    if not db_path.exists():
-        print("数据库文件不存在")
+    if not db_path.exists() or not r2_mapping_path.exists():
         return None, None, None
     
-    # 加载R2 URL映射，优先使用测试版映射文件
-    r2_mapping = {}
-    if r2_mapping_test_path.exists():
-        print("使用测试版映射文件")
-        with open(r2_mapping_test_path, 'r', encoding='utf-8') as f:
-            r2_mapping = json.load(f)
-    elif r2_mapping_path.exists():
-        print("使用正式版映射文件")
+    try:
+        # 加载R2 URL映射
         with open(r2_mapping_path, 'r', encoding='utf-8') as f:
             r2_mapping = json.load(f)
-    
-    print(f"加载到的R2映射数据: {json.dumps(r2_mapping, indent=2)}")
-    
-    conn = sqlite3.connect(str(db_path))
-    cursor = conn.cursor()
-    
-    # 获取所有不同的艺术家和提示词
-    cursor.execute('SELECT DISTINCT artist_prompt FROM image_records ORDER BY artist_prompt DESC')
-    artists = [row[0] for row in cursor.fetchall()]
-    
-    cursor.execute('SELECT DISTINCT prompt_text FROM image_records ORDER BY prompt_text DESC')
-    prompts = [row[0] for row in cursor.fetchall()]
-    
-    print(f"找到 {len(artists)} 个艺术家, {len(prompts)} 个提示词")
-    
-    # 创建图片矩阵
-    matrix = {}
-    match_count = 0
-    for artist in artists:
-        matrix[artist] = {}
-        for prompt in prompts:
+        
+        # 数据库操作
+        with db_pool.get_connection(str(db_path)) as conn:
+            cursor = conn.cursor()
+            
+            # 获取所有不同的艺术家和提示词
+            cursor.execute('SELECT DISTINCT artist_prompt FROM image_records ORDER BY artist_prompt DESC')
+            artists = [row[0] for row in cursor.fetchall()]
+            
+            cursor.execute('SELECT DISTINCT prompt_text FROM image_records ORDER BY prompt_text DESC')
+            prompts = [row[0] for row in cursor.fetchall()]
+            
+            # 使用单个SQL查询获取所有数据
             cursor.execute('''
-                SELECT image_path 
+                SELECT artist_prompt, prompt_text, image_path 
                 FROM image_records 
-                WHERE artist_prompt = ? AND prompt_text = ?
-            ''', (artist, prompt))
-            result = cursor.fetchone()
-            if result:
-                # 获取相对路径，与upload_to_r2.py中的处理方式保持一致
-                image_path = result[0]
-                print(f"检查图片: {image_path}")
-                if image_path in r2_mapping:
-                    print(f"找到R2 URL: {r2_mapping[image_path]}")
-                    matrix[artist][prompt] = r2_mapping[image_path]
+                WHERE artist_prompt IN ({}) AND prompt_text IN ({})
+            '''.format(
+                ','.join('?' * len(artists)),
+                ','.join('?' * len(prompts))
+            ), artists + prompts)
+            
+            # 创建矩阵
+            matrix = {artist: {prompt: None for prompt in prompts} for artist in artists}
+            match_count = 0
+            
+            # 填充矩阵
+            for artist_prompt, prompt_text, image_path in cursor.fetchall():
+                url = r2_mapping.get(image_path) or r2_mapping.get(Path(image_path).name)
+                if url:
+                    matrix[artist_prompt][prompt_text] = url
                     match_count += 1
-                else:
-                    # 尝试不同的路径格式
-                    alt_path = str(Path(image_path).name)
-                    if alt_path in r2_mapping:
-                        print(f"使用替代路径找到R2 URL: {r2_mapping[alt_path]}")
-                        matrix[artist][prompt] = r2_mapping[alt_path]
-                        match_count += 1
-                    else:
-                        print(f"未找到对应的R2 URL，尝试过的路径: {image_path}, {alt_path}")
-                        matrix[artist][prompt] = None
-            else:
-                matrix[artist][prompt] = None
-    
-    print(f"总共找到 {match_count} 个匹配的图片URL")
-    
-    conn.close()
-    
-    # 保存到缓存
-    save_matrix_cache(batch_name, matrix, artists, prompts)
-    
-    return matrix, artists, prompts
+            
+            print(f"总共找到 {match_count} 个匹配的图片URL")
+            
+            # 保存到缓存
+            save_matrix_cache(batch_name, matrix, artists, prompts)
+            
+            return matrix, artists, prompts
+            
+    except Exception as e:
+        print(f"处理数据时出错: {e}")
+        return None, None, None
 
 @app.route('/')
 def home():
